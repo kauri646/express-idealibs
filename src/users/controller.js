@@ -3,6 +3,8 @@ import { userSchema, signInSchema } from '../models/users.js'
 import bcrypt from 'bcrypt'
 import { nanoid } from 'nanoid'
 import { createToken, createRefreshToken } from '../middleware/jwt.js'
+import { config } from "dotenv";
+config({ path: '.env' })
 
 export const getUsers = async (req, res) => {
   try {

@@ -8,5 +8,4 @@ router.post('/signin', signIn)
 //router.post('/verifyotp', verifyOtp)
 router.post('/logout', logOut)
 
-
 export default router
