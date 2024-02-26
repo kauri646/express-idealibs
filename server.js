@@ -4,13 +4,15 @@ import filesRouter from './src/routes/file.js';
 import cookieParser from 'cookie-parser';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from "dotenv";
+import cors from 'cors'; // Import middleware CORS
 config({ path: '.env' });
 
 const app = express();
-//const port = process.env.PORT || 8080;
+const port = 8080;
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors()); // Gunakan middleware CORS di seluruh aplikasi
 
 app.use("/users", usersRouter);
 app.use("/files", filesRouter);
@@ -50,6 +52,6 @@ app.get('/', (req, res) => {
     res.send("Welcome to Idealibs");
 });
 
-// app.listen(port, () => {
-//   console.log(`Server berjalan pada http://localhost:${port}`);
-// });
+app.listen(port, () => {
+  console.log(`Server berjalan pada http://localhost:${port}`);
+});
