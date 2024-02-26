@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getUsers, signUp, signIn, logOut } from './controller.js'
+import { getUsers, signUp, signIn, logOut } from '../controller/users/userController.js'
 const router = Router()
 
 router.get("/", getUsers)

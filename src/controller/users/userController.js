@@ -1,8 +1,8 @@
-import supabase from '../config/supabase.js'
-import { userSchema, signInSchema } from '../models/users.js'
+import supabase from '../../config/supabase.js'
+import { userSchema, signInSchema } from '../../models/users.js'
 import bcrypt from 'bcrypt'
 import { nanoid } from 'nanoid'
-import { createToken, createRefreshToken } from '../middleware/jwt.js'
+import { createToken, createRefreshToken } from '../../middleware/jwt.js'
 import { config } from "dotenv";
 config({ path: '.env' })
 

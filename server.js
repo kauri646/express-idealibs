@@ -1,5 +1,6 @@
 import express from 'express';
-import usersRoutes from './src/users/routes.js';
+import usersRouter from './src/routes/user.js';
+import filesRouter from './src/routes/file.js';
 import cookieParser from 'cookie-parser';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from "dotenv";
@@ -11,7 +12,8 @@ const port = process.env.PORT || 8080;
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/users", usersRoutes);
+app.use("/users", usersRouter);
+app.use("/files", filesRouter);
 
 const client = new OAuth2Client({
   clientId: process.env.GOOGLE_CLIENT_ID,
