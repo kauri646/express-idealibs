@@ -7,7 +7,7 @@ import { config } from "dotenv";
 config({ path: '.env' });
 
 const app = express();
-const port = process.env.PORT || 8080;
+//const port = process.env.PORT || 8080;
 
 app.use(express.json());
 app.use(cookieParser());
@@ -50,6 +50,6 @@ app.get('/', (req, res) => {
     res.send("Welcome to Idealibs");
 });
 
-app.listen(port, () => {
-  console.log(`Server berjalan pada http://localhost:${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server berjalan pada http://localhost:${port}`);
+// });
