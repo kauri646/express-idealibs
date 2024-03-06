@@ -1,76 +1,93 @@
 import bcrypt from 'bcrypt';
 import { uploadFilesSchema } from '../../models/files.js'; // Asumsi Anda telah membuat schema validasi Joi untuk createPost
 import supabase from '../../config/supabase.js'
+import { imageUpload } from '../../services/fileSevice.js';
+import { file } from 'googleapis/build/src/apis/file/index.js';
 
 export const createPost = async (req, res) => {
-    try {
-      // Extract data dari request body
-      const { title, description, file_path, thumbnail, file_type, tags } = req.body;
-  
-      // Validasi data menggunakan Joi schema
-      const { error } = uploadFilesSchema.validate(req.body, { abortEarly: false }); // Gunakan abortEarly: false untuk mendapatkan semua error
-  
-      if (error) {
-        return res.status(400).json({
-          status: 'fail',
-          message: `Pembuatan post gagal, ${error.details.map(x => x.message).join(', ')}`
-        });
-      }
-  
-      // Insert data ke tabel 'files' dengan user_id = 1
-      const { data: newPost, error: insertError } = await supabase
-        .from('files')
-        .insert([{
-          title,
-          description,
-          file_path,
-          thumbnail,
-          file_type,
-          tags,
-          user_id: 1, // Menetapkan user_id sebagai 1
-          // Tambahkan fields lain sesuai dengan skema tabel Anda
-        }])
-        .single(); // Gunakan .single() jika hanya memasukkan satu baris
-  
-      if (insertError) {
-        throw insertError;
-      }
-  
-      // Respons sukses dengan data post yang baru dibuat
-      res.status(201).json({
-        status: 'success',
-      });
-  
-    } catch (err) {
-      res.status(500).json({
+  try {
+    if (!req.files.file_path) {
+      res.status(422).json({
         status: 'fail',
-        message: `Server error: ${err.message}`
-      });
+        message: 'Image atau Proposal harus di upload'
+      })
     }
-};
+
+    const { error, value } = uploadFilesSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+      const response = res.status(400).json({
+        status: 'fail',
+        message: `Upload Gagal, ${error.message}`
+      })
+      return response
+    }
+
+    const { title, description, file_type, tags_id, categories_id } = req.body;
+    const { id } = req.params
+    const { file_path } = req.files
+
+    const imageUrl = await imageUpload('public', 'submission_images', file_path)
+
+    const { data: submission, error: err } = await supabase
+      .from('files')
+      .insert({ title: title, description: description, file_path: imageUrl, file_type: file_type, tags_id: tags_id, user_id: id, categories_id: categories_id })
+      .select()
+
+    if (err) {
+      const response = res.status(400).json({
+        status: 'fail',
+        message: `Upload Gagal, ${err.message}`
+      })
+      return response
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'file uploaded successfully',
+      data: submission
+    })
+
+  } catch (err) {
+    return res.status(500).json({ status: 'error', error: err.message });
+  }
+}
 
 export const getAllFiles = async (req, res) => {
-    try {
-        // Query semua file dari tabel 'files'
-        const { data: files, error } = await supabase
-            .from('files')
-            .select('*');
+  try {
+      // Mendapatkan nomor halaman dan jumlah item per halaman dari query parameter
+      // Menetapkan nilai default jika parameter tidak disediakan
+      const page = parseInt(req.query.page) || 1; // Default to page 1 if not specified
+      const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not specified
+      const offset = (page - 1) * limit; // Calculate the offset
 
-        // Jika terjadi kesalahan dalam query
-        if (error) {
-            throw error;
-        }
+      const { data: files, error, count } = await supabase
+          .from('files')
+          .select('*', { count: 'exact' }) // Use count to get the total number of records
+          .range(offset, offset + limit - 1); // Use range for pagination
 
-        // Jika berhasil mendapatkan data, kirim data sebagai respons
-        res.status(200).json({
-            status: 'success',
-            data: files,
-        });
-    } catch (err) {
-        // Tangani kesalahan
-        res.status(500).json({
-            status: 'fail',
-            message: `Server error: ${err.message}`
-        });
-    }
+      if (error) {
+          throw error;
+      }
+
+      // Menghitung jumlah total halaman
+      const totalPages = Math.ceil(count / limit);
+
+      res.status(200).json({
+          status: 'success',
+          data: files,
+          pagination: {
+              totalItems: count,
+              totalPages: totalPages,
+              currentPage: page,
+              itemsPerPage: limit,
+          },
+      });
+  } catch (err) {
+      // Handle errors
+      res.status(500).json({
+          status: 'fail',
+          message: `Server error: ${err.message}`,
+      });
+  }
 };

@@ -7,16 +7,19 @@ export const uploadFilesSchema = joi.object().keys({
   description: joi.string().required().messages({
     'string.empty': 'Harap isi description'
   }),
-  thumbnail: joi.string().required().messages({
-    'string.empty': 'Harap isi thumbnail'
-  }),
+  // thumbnail: joi.string().required().messages({
+  //   'string.empty': 'Harap isi thumbnail'
+  // }),
   file_type: joi.string().required().messages({
     'string.empty': 'Harap isi file_type'
   }),
-  file_path: joi.string().required().messages({
-      'string.empty': 'Harap isi file_path'
-  }),
-  tags: joi.string().required().messages({
+  // file_path: joi.string().required().messages({
+  //     'string.empty': 'Harap isi file_path'
+  // }),
+  tags_id: joi.string().required().messages({
       'string.empty': 'Harap isi tags'
+  }),
+  categories_id: joi.string().required().messages({
+    'string.empty': 'Harap isi category'
   })
 });

@@ -3,7 +3,7 @@ import { createPost, getAllFiles } from '../controller/files/fileController.js'
 const router = Router()
 
 //router.get("/", getUsers)
-router.post('/upload-image', createPost)
+router.post('/upload-image/:id', createPost)
 router.get('/', getAllFiles)
 //router.post('/signin', signIn)
 //router.post('/verifyotp', verifyOtp)

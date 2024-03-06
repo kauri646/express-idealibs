@@ -4,6 +4,7 @@ import filesRouter from './src/routes/file.js';
 import cookieParser from 'cookie-parser';
 import { OAuth2Client } from 'google-auth-library';
 import { config } from "dotenv";
+import fileUpload from "express-fileupload"
 import cors from 'cors'; // Import middleware CORS
 config({ path: '.env' });
 
@@ -13,6 +14,7 @@ const port = 8080;
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors()); // Gunakan middleware CORS di seluruh aplikasi
+app.use(fileUpload())
 
 app.use("/users", usersRouter);
 app.use("/files", filesRouter);
