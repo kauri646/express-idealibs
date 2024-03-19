@@ -1,10 +1,11 @@
 import { Router } from 'express'
-import { createPost, getAllFiles } from '../controller/files/fileController.js'
+import { createPost, getAllFiles, getFileById } from '../controller/files/fileController.js'
 const router = Router()
 
 //router.get("/", getUsers)
-router.post('/upload-image', createPost)
+router.post('/upload-image/:id', createPost)
 router.get('/', getAllFiles)
+router.get('/:id', getFileById)
 //router.post('/signin', signIn)
 //router.post('/verifyotp', verifyOtp)
 //router.post('/logout', logOut)
