@@ -21,5 +21,8 @@ export const uploadFilesSchema = joi.object().keys({
   }),
   categories_id: joi.string().required().messages({
     'string.empty': 'Harap isi category'
+  }),
+  item_id: joi.string().required().messages({
+    'string.empty': 'Harap isi item id'
   })
 });

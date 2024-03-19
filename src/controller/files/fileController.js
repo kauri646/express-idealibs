@@ -23,7 +23,7 @@ export const createPost = async (req, res) => {
       return response
     }
 
-    const { title, description, file_type, tags_id, categories_id } = req.body;
+    const { title, description, file_type, tags_id, categories_id, item_id } = req.body;
     const { id } = req.params
     const { file_path } = req.files
 
@@ -31,7 +31,7 @@ export const createPost = async (req, res) => {
 
     const { data: submission, error: err } = await supabase
       .from('files')
-      .insert({ title: title, description: description, file_path: imageUrl, file_type: file_type, tags_id: tags_id, user_id: id, categories_id: categories_id })
+      .insert({ title: title, description: description, file_path: imageUrl, file_type: file_type, tags_id: tags_id, user_id: id, categories_id: categories_id, item_id:item_id })
       .select()
 
     if (err) {
@@ -53,41 +53,158 @@ export const createPost = async (req, res) => {
   }
 }
 
+// export const getAllFiles = async (req, res) => {
+//   try {
+//     // Mendapatkan nomor halaman dan jumlah item per halaman dari query parameter
+//     const page = parseInt(req.query.page) || 1; 
+//     const limit = parseInt(req.query.limit) || 10;
+//     const offset = (page - 1) * limit;
+
+//     // Mengambil data files
+//     let { data: files, error: filesError, count } = await supabase
+//       .from('files')
+//       .select(`id, title, description, file_path, created_at, file_type, categories_id, tags_id`, { count: 'exact' })
+//       .range(offset, offset + limit - 1);
+
+//     if (filesError) {
+//       throw filesError;
+//     }
+
+//     // Mengambil data categories dan tags secara terpisah
+//     // Optimasi potensial: Gunakan .in() untuk mengurangi jumlah query jika ada banyak duplikat categories_id atau tags_id di hasil files
+//     const categories = {};
+//     const tags = {};
+//     for (const file of files) {
+//       if (!categories[file.categories_id]) {
+//         let { data: category } = await supabase
+//           .from('categories')
+//           .select(`category`)
+//           .eq('id', file.categories_id)
+//           .single();
+//         categories[file.categories_id] = category.category;
+//       }
+//       if (!tags[file.tags_id]) {
+//         let { data: tag } = await supabase
+//           .from('tags')
+//           .select(`tag`)
+//           .eq('id', file.tags_id)
+//           .single();
+//         tags[file.tags_id] = tag.tag;
+//       }
+//     }
+
+//     // Menambahkan category_name dan tag_name ke setiap file
+//     const enrichedFiles = files.map(file => ({
+//       ...file,
+//       category_name: categories[file.categories_id],
+//       tag_name: tags[file.tags_id]
+//     }));
+
+//     // Menghitung jumlah total halaman
+//     const totalPages = Math.ceil(count / limit);
+
+//     res.status(200).json({
+//       status: 'success',
+//       data: enrichedFiles,
+//       pagination: {
+//           totalItems: count,
+//           totalPages: totalPages,
+//           currentPage: page,
+//           itemsPerPage: limit,
+//       },
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       status: 'fail',
+//       message: `Server error: ${err.message}`,
+//     });
+//   }
+// };
+
 export const getAllFiles = async (req, res) => {
   try {
-      // Mendapatkan nomor halaman dan jumlah item per halaman dari query parameter
-      // Menetapkan nilai default jika parameter tidak disediakan
-      const page = parseInt(req.query.page) || 1; // Default to page 1 if not specified
-      const limit = parseInt(req.query.limit) || 10; // Default to 10 items per page if not specified
-      const offset = (page - 1) * limit; // Calculate the offset
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+    const itemId = req.query.item_id;
+    const categoryId = req.query.category_id;
 
-      const { data: files, error, count } = await supabase
+    // Membangun query dengan kondisi filter yang diberikan
+    let query = supabase
+      .from('files')
+      .select('id, title, description, file_path, created_at, file_type, categories_id, tags_id', { count: 'exact' });
+
+    // Menambahkan filter jika diberikan dalam query params
+    if (itemId) {
+      query = query.eq('item_id', itemId); // Perhatikan disini koreksi dari 'item_id' ke 'id'
+    }
+
+    if (categoryId) {
+      query = query.eq('categories_id', categoryId);
+    }
+
+    // Melakukan query dengan filter dan pagination yang telah ditentukan
+    const { data: files, error: filesError, count } = await query.range(offset, offset + limit - 1);
+
+    if (filesError) {
+      throw filesError;
+    }
+
+    const totalPages = Math.ceil(count / limit);
+
+    res.status(200).json({
+      status: 'success',
+      data: files,
+      pagination: {
+        totalItems: count,
+        totalPages: totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'fail',
+      message: `Server error: ${err.message}`,
+    });
+  }
+};
+
+export const getFileById = async (req, res) => {
+  try {
+      // Mendapatkan ID dari parameter request
+      const { id } = req.params;
+
+      // Query file berdasarkan ID dari tabel 'files'
+      const { data: file, error } = await supabase
           .from('files')
-          .select('*', { count: 'exact' }) // Use count to get the total number of records
-          .range(offset, offset + limit - 1); // Use range for pagination
+          .select('*')
+          .eq('id', id)
+          .single(); // Gunakan .single() untuk mendapatkan objek tunggal, bukan array
 
+      // Jika terjadi kesalahan dalam query
       if (error) {
           throw error;
       }
 
-      // Menghitung jumlah total halaman
-      const totalPages = Math.ceil(count / limit);
+      // Jika file tidak ditemukan
+      if (!file) {
+          return res.status(404).json({
+              status: 'fail',
+              message: 'File not found',
+          });
+      }
 
+      // Jika berhasil mendapatkan data, kirim data sebagai respons
       res.status(200).json({
           status: 'success',
-          data: files,
-          pagination: {
-              totalItems: count,
-              totalPages: totalPages,
-              currentPage: page,
-              itemsPerPage: limit,
-          },
+          data: file,
       });
   } catch (err) {
-      // Handle errors
+      // Tangani kesalahan
       res.status(500).json({
           status: 'fail',
-          message: `Server error: ${err.message}`,
+          message: `Server error: ${err.message}`
       });
   }
 };
