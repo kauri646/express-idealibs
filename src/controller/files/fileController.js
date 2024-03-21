@@ -522,7 +522,95 @@ export const getFileById = async (req, res) => {
   }
 };
 
+export const getIconById = async (req, res) => {
+  try {
+    // Mendapatkan ID dari parameter request
+    const { id } = req.params;
 
+    // Query file berdasarkan ID dari tabel 'files'
+    const { data: file, error } = await supabase
+      .from('icons')
+      .select('*')
+      .eq('id', id)
+      .single(); // Gunakan .single() untuk mendapatkan objek tunggal, bukan array
+
+    // Jika terjadi kesalahan dalam query
+    if (error) {
+      throw error;
+    }
+
+    // Jika file tidak ditemukan
+    if (!file) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'File not found',
+      });
+    }
+
+    const { categories_id, tags_id, user_id, item_id } = file;
+
+    // Mendapatkan kategori
+    const { data: categoryData } = await supabase
+      .from('categories')
+      .select('category')
+      .eq('id', categories_id)
+      .single();
+    const category_name = categoryData ? categoryData.category : null;
+
+    // Mendapatkan tag
+    const { data: tagData } = await supabase
+      .from('tags')
+      .select('tag')
+      .eq('id', tags_id)
+      .single();
+    const tag_name = tagData ? tagData.tag : null;
+
+    // Mendapatkan user
+    const { data: userData } = await supabase
+      .from('users')
+      .select('username')
+      .eq('id', user_id)
+      .single();
+    const username = userData ? userData.username : null;
+
+    // Mendapatkan item
+    const { data: itemData } = await supabase
+      .from('items')
+      .select('item')
+      .eq('id', item_id)
+      .single();
+    const items = itemData ? itemData.item : null;
+
+    // Format tanggal
+    const formattedDate = new Date(file.created_at).toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+
+    // Menambahkan format tanggal yang diformat ke data file
+    const fileWithFormattedDate = {
+      ...file,
+      category_name,
+      tag_name,
+      username,
+      items,
+      created_at: formattedDate
+    };
+
+    // Jika berhasil mendapatkan data, kirim data sebagai respons
+    res.status(200).json({
+      status: 'success',
+      data: fileWithFormattedDate,
+    });
+  } catch (err) {
+    // Tangani kesalahan
+    res.status(500).json({
+      status: 'fail',
+      message: `Server error: ${err.message}`
+    });
+  }
+};
 
 export const createPalette = async (req, res) => {
   try {
