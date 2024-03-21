@@ -654,7 +654,7 @@ export const createPalette = async (req, res) => {
 export const getAllPalettes = async (req, res) => {
   try {
     // Query semua palet warna dari database
-    const { data: palettes, error: paletteError } = await supabase.from('colors').select('id, user_id, hex');
+    const { data: palettes, error: paletteError } = await supabase.from('colors').select('id, user_id, hex, created_at');
 
     if (paletteError) {
       throw paletteError;
@@ -675,16 +675,21 @@ export const getAllPalettes = async (req, res) => {
         throw userError;
       }
 
-      // Menambahkan username ke dalam palet
-      const paletteWithUsername = {
+      // Format tanggal
+      const createdAt = new Date(palette.created_at);
+      const formattedDate = createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      // Menambahkan username dan tanggal pembuatan ke dalam palet
+      const paletteWithUsernameAndDate = {
         id: palette.id,
         user_id: palette.user_id,
         username: userData.username,
-        hex: hexColors
+        hex: hexColors,
+        created_at: formattedDate
       };
 
       // Menambahkan palet yang telah diperbarui ke dalam array final
-      finalPalettes.push(paletteWithUsername);
+      finalPalettes.push(paletteWithUsernameAndDate);
     }
 
     // Mengembalikan data sebagai respons
@@ -696,6 +701,7 @@ export const getAllPalettes = async (req, res) => {
     return res.status(500).json({ status: 'error', error: err.message });
   }
 };
+
 
 export const getPaletteById = async (req, res) => {
   try {
@@ -731,6 +737,10 @@ export const getPaletteById = async (req, res) => {
       throw userError;
     }
 
+    // Format tanggal
+    const createdAt = new Date(data.created_at);
+    const formattedDate = createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
     // Jika berhasil mendapatkan data, kirim data sebagai respons
     return res.status(200).json({
       status: 'success',
@@ -738,11 +748,13 @@ export const getPaletteById = async (req, res) => {
         id: data.id,
         user_id: data.user_id,
         username: userData.username,
-        hex: hexColors
+        hex: hexColors,
+        created_at: formattedDate
       }
     });
   } catch (err) {
     return res.status(500).json({ status: 'error', error: err.message });
   }
 };
+
 

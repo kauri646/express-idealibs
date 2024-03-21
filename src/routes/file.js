@@ -11,8 +11,8 @@ router.get('/colors', getAllPalettes)
 router.get('/', getAllFiles)
 router.get('/:id', getFileById)
 router.post('/collections', addToCollection)
-router.post('/color/:id', createPalette)
-router.get('/color/:id', getPaletteById)
+router.post('/colors/:id', createPalette)
+router.get('/colors/:id', getPaletteById)
 router.get('/collections/:id', getCollectionById)
 
 
