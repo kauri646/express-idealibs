@@ -12,7 +12,7 @@ const port = 8080;
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors()); // Gunakan middleware CORS di seluruh aplikasi
+app.use(cors()); 
 app.use(fileUpload())
 
 app.use("/users", usersRouter);

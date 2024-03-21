@@ -1,4 +1,4 @@
-import {supabase} from '../../config/supabase.js'
+import supabase from '../../config/supabase.js'
 import { userSchema, signInSchema } from '../../models/users.js'
 import bcrypt from 'bcrypt'
 import { nanoid } from 'nanoid'

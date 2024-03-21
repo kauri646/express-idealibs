@@ -1,5 +1,5 @@
 import { uploadFilesSchema, uploadIconSchema } from '../../models/files.js'; 
-import {supabase} from '../../config/supabase.js'
+import supabase from '../../config/supabase.js'
 import { imageUpload } from '../../services/fileSevice.js';
 
 export const createPost = async (req, res) => {
