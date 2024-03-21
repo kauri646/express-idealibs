@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import {supabase} from '../config/supabase.js';
+import supabase from '../config/supabase.js';
 
 export const imageUpload = async (folder, bucket, image) => {
   try {
