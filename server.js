@@ -18,6 +18,10 @@ app.use(fileUpload())
 app.use("/users", usersRouter);
 app.use("/files", filesRouter);
 
+app.get("/", (req, res) => {
+res.send("welcome to idealibs")
+})
+
 app.listen(port, () => {
   console.log(`Server berjalan pada http://localhost:${port}`);
 });

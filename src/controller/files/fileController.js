@@ -563,3 +563,98 @@ export const createPalette = async (req, res) => {
   }
 }
 
+export const getAllPalettes = async (req, res) => {
+  try {
+    // Query semua palet warna dari database
+    const { data: palettes, error: paletteError } = await supabase.from('colors').select('id, user_id, hex');
+
+    if (paletteError) {
+      throw paletteError;
+    }
+
+    // Array untuk menyimpan hasil akhir
+    const finalPalettes = [];
+
+    // Loop melalui setiap palet
+    for (const palette of palettes) {
+      // Membuat array warna dari hex yang disimpan di database
+      const hexColors = palette.hex.split(',').filter(color => color !== ''); // Memisahkan hex menjadi array warna dan menghapus warna kosong
+
+      // Mendapatkan username berdasarkan user_id
+      const { data: userData, error: userError } = await supabase.from('users').select('username').eq('id', palette.user_id).single();
+
+      if (userError) {
+        throw userError;
+      }
+
+      // Menambahkan username ke dalam palet
+      const paletteWithUsername = {
+        id: palette.id,
+        user_id: palette.user_id,
+        username: userData.username,
+        hex: hexColors
+      };
+
+      // Menambahkan palet yang telah diperbarui ke dalam array final
+      finalPalettes.push(paletteWithUsername);
+    }
+
+    // Mengembalikan data sebagai respons
+    return res.status(200).json({
+      status: 'success',
+      data: finalPalettes
+    });
+  } catch (err) {
+    return res.status(500).json({ status: 'error', error: err.message });
+  }
+};
+
+export const getPaletteById = async (req, res) => {
+  try {
+    // Mendapatkan ID palet warna dari parameter request
+    const { id } = req.params;
+
+    // Query palet warna berdasarkan ID dari database
+    const { data, error } = await supabase
+      .from('colors')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Jika palet warna tidak ditemukan
+    if (!data) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Palette not found',
+      });
+    }
+
+    // Memisahkan hex menjadi array warna
+    const hexColors = data.hex.split(',').filter(color => color !== ''); // Memisahkan hex menjadi array warna dan menghapus warna kosong
+
+    // Mendapatkan username berdasarkan user_id
+    const { data: userData, userError } = await supabase.from('users').select('username').eq('id', data.user_id).single();
+
+    if (userError) {
+      throw userError;
+    }
+
+    // Jika berhasil mendapatkan data, kirim data sebagai respons
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        id: data.id,
+        user_id: data.user_id,
+        username: userData.username,
+        hex: hexColors
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ status: 'error', error: err.message });
+  }
+};
+
