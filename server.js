@@ -6,6 +6,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { config } from "dotenv";
 import fileUpload from "express-fileupload"
 import cors from 'cors'; // Import middleware CORS
+import { saveUserToDatabase } from './src/config/supabase.js'; 
 config({ path: '.env' });
 
 const app = express();
@@ -37,12 +38,10 @@ app.get('/auth/google/callback', async (req, res) => {
   const { code } = req.query;
   try {
     const { tokens } = await client.getToken(code);
-    // Simpan token di cookies tanpa memeriksa NODE_ENV
-    res.cookie('access_token', tokens.access_token, { httpOnly: true }); // Contoh untuk development, buang opsi secure
-    if (tokens.refresh_token) { // Refresh token hanya diberikan pada grant pertama, simpan jika ada
-      res.cookie('refresh_token', tokens.refresh_token, { httpOnly: true }); // Contoh untuk development, buang opsi secure
-    }
-    // Redirect pengguna setelah berhasil login
+    const user = await getUserInfo(tokens.access_token);
+    // Simpan informasi pengguna ke database
+    await saveUserToDatabase(user);
+    // Redirect pengguna ke halaman utama
     res.redirect('/');
   } catch (error) {
     console.error('Error retrieving tokens:', error);
@@ -50,10 +49,17 @@ app.get('/auth/google/callback', async (req, res) => {
   }
 });
 
-app.get('/', (req, res) => {
-    res.send("Welcome to Idealibs");
-});
-
 app.listen(port, () => {
   console.log(`Server berjalan pada http://localhost:${port}`);
 });
+
+async function getUserInfo(accessToken) {
+  const { data } = await client.request({
+    url: 'https://www.googleapis.com/oauth2/v2/userinfo',
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`
+    }
+  });
+  return data;
+}
