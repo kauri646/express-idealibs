@@ -187,63 +187,71 @@ export const signUp = async (req, res) => {
 //     }
 //   }
   
-  export const signIn = async (req, res) => {
-    try {
-      const { username, email, password } = req.body
-  
+export const signIn = async (req, res) => {
+  try {
+      const { username, email, password } = req.body;
+
       const { error, value } = signInSchema.validate(req.body, { abortEarly: true });
-  
+
       if (error) {
-        const response = res.status(400).json({
-          status: 'fail',
-          message: `Login Gagal, ${error.message}`
-        })
-        return response
-      };
-  
-      const { data: user } = await supabase
-        .from('users')
-        .select('*')
-        .or(`username.eq.${username}, email.eq.${email}`)
-  
-      if (!user || user.length === 0) {
-        return res.status(404).json({
-          status: 'fail',
-          message: 'Silakan Masukkan Email atau username yang benar'
-        })
+          return res.status(400).json({
+              status: 'fail',
+              message: `Login Gagal, ${error.message}`
+          });
       }
-  
-      const isValid = await bcrypt.compare(password, user[0].password)
-  
+
+      const { data: users, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .or(`username.eq.${username},email.eq.${email}`);
+
+      if (userError) {
+          throw new Error(userError.message);
+      }
+
+      if (!users || users.length === 0) {
+          return res.status(404).json({
+              status: 'fail',
+              message: 'Silakan Masukkan Email atau username yang benar'
+          });
+      }
+
+      const user = users[0];
+
+      const isValid = await bcrypt.compare(password, user.password);
+
       if (!isValid) {
-        return res.status(404).json({
-          status: 'fail',
-          message: 'Silakan Masukkan Password yang benar'
-        })
+          return res.status(401).json({
+              status: 'fail',
+              message: 'Silakan Masukkan Password yang benar'
+          });
       }
-  
-      const { accessToken } = createToken({ id: user[0].id, name: user[0].name, email: user[0].email, signature: user[0].signature })
-      const { refreshToken } = createRefreshToken({ id: user[0].id, name: user[0].name, email: user[0].email, signature: user[0].signature })
-  
-      const { data: status } = await supabase
-        .from('users')
-        .update({ refresh_token: refreshToken })
-        .eq('id', user[0].id)
-  
-      res.cookie('refreshToken', refreshToken, {
-        httOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-      })
-  
-      res.status(200).json({ accessToken })
-  
-    } catch (err) {
+
+      // let roleType = 'user';
+      // if (user.role === 1) {
+      //     roleType = 'free user';
+      // } else if (user.role === 2) {
+      //     roleType = 'premium user';
+      // }
+
+      const { accessToken } = createToken({ id: user.id, username: user.username, email: user.email });
+
+      res.status(200).json({
+          accessToken,
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role
+      });
+
+  } catch (err) {
       res.status(500).json({
-        status: 'fail',
-        message: err.message
-      })
-    }
+          status: 'fail',
+          message: err.message
+      });
   }
+};
+
   
   export const logOut = async (req, res) => {
     try {
